@@ -21,7 +21,33 @@ const requestListener = async (req, res) => {
                 error: error.message
             }))
         }
-    
+    }
+    if (req.url === '/users/new' && req.method === 'POST') {
+        let body = ''
+        req
+            .on('data', chunk => {
+                body += chunk
+            })
+            .on('end', async () => {
+                try {
+                    const parsedBodyData = JSON.parse(body)
+                    let users = []
+                    const data = await fs.readFile('./database.json')
+                    if (data.length > 0) users = JSON.parse(data)
+
+                    users.push(parsedBodyData)
+
+                    await fs.writeFile('./database.json', JSON.strigify(users))
+                    res.writeHead(200)
+                    res.end(JSON.stringify(parsedBodyData))
+                } catch (error) {
+                    res.writeHead(500, {'Content-type': 'application/json'})
+                    res.end(JSON.stringify({
+                        message: 'something went wrong while adding a user',
+                        error: error.message
+                    }))
+                }
+            })
     }
 }
 
