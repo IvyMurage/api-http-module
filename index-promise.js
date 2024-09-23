@@ -15,11 +15,12 @@ const requestListener = async (req, res) => {
             res.writeHead(200)
             res.end(JSON.stringify(users)) // Send JSON response
         } catch (error) {
-            res.writeHead(500)
-            res.end(JSON.stringify({
-                message: 'Something went wrong',
-                error: error.message
-            }))
+            res
+                .writeHead(500)
+                .end(JSON.stringify({
+                    message: 'Something went wrong',
+                    error: error.message
+                }))
         }
     }
     if (req.url === '/users/new' && req.method === 'POST') {
@@ -37,17 +38,35 @@ const requestListener = async (req, res) => {
 
                     users.push(parsedBodyData)
 
-                    await fs.writeFile('./database.json', JSON.strigify(users))
-                    res.writeHead(200)
-                    res.end(JSON.stringify(parsedBodyData))
+                    await fs.writeFile('./database.json', JSON.stringify(users))
+                    res
+                        .writeHead(200)
+                        .end(JSON.stringify(parsedBodyData))
                 } catch (error) {
-                    res.writeHead(500, {'Content-type': 'application/json'})
-                    res.end(JSON.stringify({
-                        message: 'something went wrong while adding a user',
-                        error: error.message
-                    }))
+                    res
+                        .writeHead(500, {
+                            'Content-type': 'application/json'
+                        })
+                        .end(JSON.stringify({
+                            message: 'something went wrong while adding a user',
+                            error: error.message
+                        }))
                 }
             })
+    }
+
+    if (req.method === 'DELETE' && req.url.startsWith('/users/')) {
+        const getId = req.url.split('/')
+        const id = getId[getId.length - 1]
+
+        const data = await fs.readFile('./database.json')
+        const users = data.length ? JSON.parse(data) : []
+        const userIndex = users.findIndex(user => user.id === Number(id))
+        users.splice(userIndex, 1)
+
+        await fs.writeFile('./database.json', JSON.stringify(users))
+        res.writeHead(200)
+        res.end(JSON.stringify({message: 'User successfully deleted'}))
     }
 }
 
